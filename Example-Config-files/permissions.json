@@ -1,0 +1,7 @@
+{
+    "allow_file_io": true,
+    "allow_code_execution": true,
+    "allow_auto_browse": true,
+    "allow_host_control": true
+}
+

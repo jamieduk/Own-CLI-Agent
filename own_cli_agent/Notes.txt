@@ -1,0 +1,109 @@
+
+
+
+
+
+# 1. Create venv only if the folder does not exist
+if [ ! -d "venv" ]; then
+    echo "Creating virtual environment..."
+    python -m venv venv
+    echo "Virtual Environment Created."
+fi
+
+# 2. Activate venv only if not already active
+# $VIRTUAL_ENV is set by the 'source venv/bin/activate' script
+if [ -z "$VIRTUAL_ENV" ] || [ "$(basename "$VIRTUAL_ENV")" != "venv" ]; then
+    source venv/bin/activate
+    echo "Virtual Environment Activated."
+else
+    echo "Virtual Environment already active."
+fi
+
+
+# Install required pip things!
+pip install textual requests
+
+
+# Make sure Ollama is running (ollama serve)
+
+# Start App
+./venv/bin/python -m own_cli_agent.main
+
+
+# Old Method!
+#./venv/bin/python own_cli.py
+
+
+
+You can then try:
+
+Chat: /chat What is the best language for CLI tools?
+
+Agent: /agent Create a Python script named 'hello.py' that prints 'Hello, Agent CLI!' and then run it.
+
+Options: Press F1 to toggle the configuration and permissions view.
+
+1. Project Folder (current_project)Yes, the current_project folder is automatically created.It happens in two places in own_cli.py:Top-level Definition:PythonTEMP_PROJECT_DIR = CONFIG_DIR / "current_project"
+Creation on Mount:In the on_mount method of OwnCLIApp, this line ensures the folder exists every time the application starts:PythonTEMP_PROJECT_DIR.mkdir(parents=True, exist_ok=True)
+This folder serves as the sandbox where the agent will create, read, and execute any files, keeping the rest of your system safe.2. Changing PermissionsPermissions are handled by the permissions.json file, which is created in your home directory (~/.own_cli_agent/permissions.json) on the first run.The tool execution logic in the ToolExecutor class checks the permissions configuration before executing any powerful commands like run_code or write_file.To enable folder creation and code execution, you need to set the relevant flags to True in that file.How to Enable Folder Creation & ExecutionYou need to enable two flags in the permissions.json file:Permission KeyDescriptionHow it helps"allow_file_io"Allows the agent to read and write files (including directory creation as a side effect of writing a file with a relative path, e.g., src/main.py).Enable this to let the agent create the project structure."allow_code_execution"Allows the agent to run commands via run_code().Enable this to allow the agent to install dependencies (pip install) or test the code (python main.py).Locate the File: Open ~/.own_cli_agent/permissions.json in your favorite external editor (like nano or vim).Edit the File: Change the False values to True:JSON{
+    "allow_file_io": true,
+    "allow_code_execution": true,
+    "allow_auto_browse": false,
+    "allow_host_control": false
+}
+Restart: Save the file and restart the Own-Agent-AI application to load the new permissions.Once restarted, the agent will be able to use the write_file tool to create subfolders (e.g., by calling write_file("src/main.py", "...")) and use the run_code tool to execute Python scripts or shell commands.
+
+Edit the config
+gedit ~/.own_cli_agent/config.json
+
+To backup a config
+cp ~/.own_cli_agent/config.json .
+
+hold ctrl button and click links to open in browser!
+Hold shift to select and copy / paste text with mouse or kb along with ctrl button!
+
+
+
+
+# Example prompts
+
+/chat tell me a bad joke
+
+/agent Create a Python file named 'agent_test.py' that defines a function called 'greeting' which returns the string "Agent mode works!". Then, use the 'run_code' tool to execute that file using 'python agent_test.py' and print the output
+
+
+Permissions File
+gedit ~/.own_cli_agent/permissions.json
+
+
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Prompt used to generate this app....
+
+I tried using agent-cli and continue-cli and maybe even gemini-cli and clause-cli with ollama locally for the agentic features but none seem to work well langchain works but i want something new and local (ollama powered) and private free and easy and in the cli but also capable of web api interactive / compatible aswell i want something new my own-cli where i can tell the program what model from an ollama list of available compatible models to use and it just work agentically when needed to do anything i want from chat / message mode to agent mode where full projects can be built from scratch (avoiding all ollama timeouts by chunking data and doing it all in small steps until its all complete also capable of self testing built projects and running code all automated, i want something built from scratch not something someone else thats already made, it must work on rpi linux ubuntu, it must have ability to use tools, read and write files point and click host mouse and keyboard, capable of browsing the web via brave-browser to run automated tasks if the mission requires it, all permissions for all these things should be stored in a config folder location called permissions file and easy changed and updated by human / user to allow auto-browse, auto-move, auto-run, etc(each on its own line or in an array or something ) should have options menu so these settings and more can be changed at any time easy, should allow capability of also using other providers other than local ollama for example giving a new endpoint name, api_key, base_url so each provider can be added or removed aswell as enabled and disabled (default enabled) and even have an agent choose available endpoints to use based on what the task is, for example image model can be a certain provider, chosen by the user and if none has been chosen it should be offered to user for future use and easy changeable to another provider etc full customisable and future proof, made with python (unless theres a better language), the app must look good like gemini / continue also it must have session / memory storage capabilities so it can learn from similar projects for context and build from so it gets better overall over time. for example if its already done something very similar before it dosnt have to start from scratch every time it can gain from past experience and use it as context for planning out its mission at hand, (so store sessions and memories with useful names / tags so it can look for these before having to start from scratch style of working)
+
+
+This is a very comprehensive and ambitious request! You are essentially looking to build a fully-featured, model-agnostic, multi-modal, agentic AI development environment that is also easy to configure and runs on a Raspberry Pi (RPi) environment like Ubuntu.Since you explicitly stated you want something built from scratch, not something someone else has already made, I cannot give you a single existing project or tool. Instead, I will provide a high-level architectural design and a breakdown of the key components you will need to build your custom "own-cli" using Python, which is an excellent choice for this kind of project.Architectural Design: The "Own-CLI" AgentThe best way to structure this is to adopt a classic Agentic Workflow design.1. Core Component: The Dispatcher/Controller (The CLI Itself)This will be the main Python script that the user interacts with.FeatureImplementation DetailCLI InterfaceUse Python libraries like argparse or Click for command-line arguments and a simple interactive loop for the chat/agent mode.ConfigurationUse the configparser or YAML library to manage all settings (providers, models, permissions) from a centralized location (~/.own-cli/config.yaml).Modes/chat (simple message to a model) and /agent (complex, multi-step goal execution).2. Key Component: The Model ManagerThis handles all communication with various LLM providers.FeatureImplementation DetailOllama IntegrationUse the Ollama Python Library. This is the non-negotiable component for your local models. It will allow you to:<ul><li>List Models: Get the list of available models (ollama list).</li><li>Inference: Send requests to the desired model for chat/completion.</li></ul>External API CompatibilityCreate a generic LLMProvider interface/class that can be implemented by different providers. For OpenAI-compatible endpoints (which many providers and Ollama mimic):<ul><li>Use the openai Python library (or a fork like litellm which abstracts many APIs).</li><li>Store the endpoint_name, api_key, and base_url in your config for easy provider switching.</li></ul>Model Selection LogicImplement logic to automatically or manually choose the model:<ul><li>Default/Manual: User specifies a model like /chat mistral:7b.</li><li>Agent Choice: The agent can check the model metadata (e.g., if it's a multi-modal model for an image task) to select the best one, with a fallback to the user-preferred default.</li></ul>3. Key Component: The Agentic Core (The Brain)This is where the complex, multi-step reasoning happens.FeatureImplementation DetailReasoning LoopImplement a simple ReAct (Reasoning and Acting) loop, which is great for agentic tasks. The steps are: Goal $\rightarrow$ Plan $\rightarrow$ Act $\rightarrow$ Observe $\rightarrow$ Repeat/Finish.Self-Correction & Error HandlingIf an Act (e.g., running code) fails, send the error message (Observe) back into the reasoning loop for the model to generate a new Plan.Ollama Timeouts/ChunkingThis is crucial for local LLMs. You will need to implement:<ul><li>Adaptive Context: When dealing with large files, the Agent Core should chunk the file and send summaries or focused code snippets (using the File Tool).</li><li>Atomic Steps: Break down big tasks ("Build a full project") into small, manageable LLM calls ("Create initial folder structure," "Generate main.py," "Generate requirements.txt").</li></ul>4. Key Component: The Tool Executor (The Hands)This is the set of functions the LLM is allowed to call. The model's prompt will explicitly describe these tools.Tool NamePython Library/MethodPermission Flag in permissions filefile_manageros, pathliballow_file_iocode_runnersubprocess or execallow_code_executionweb_browserselenium (for Brave automation)allow_auto_browseinput_handlerpynput or custom click() logicallow_host_control5. The Critical Security & Usability ComponentYou must strictly enforce the permissions file to make this safe and easy to use.RequirementSolutionpermissions fileA simple text file (permissions.txt or permissions.yaml) in your config directory. It should contain a list of flags: 
+ allow_auto_browse: True 
+ allow_code_execution: True 
+ allow_host_control: FalseRPi/Linux CompatibilityStick to pure Python libraries (pathlib, requests, subprocess) or cross-platform libraries like Ollama and Selenium. For host control (mouse/keyboard), pynput is a good, cross-platform choice.Web Browser AutomationYou'll need selenium and the appropriate WebDriver (e.g., ChromeDriver) for the Brave browser. This will be an advanced tool for the agent.Next Steps for Building:Start with the Core: Build the basic CLI interface and the configuration system using Python.Add Ollama: Integrate the Ollama Python library and get a working /chat command with local models.Define the Tools: Create the Python functions for file I/O and running code, making sure to check the permissions file before executing the system call.Build the Agent: Implement the Agentic Core (the ReAct loop) that prompts the LLM to choose one of your defined tools.This project is a significant undertaking, but Python provides all the necessary building blocks to achieve your vision.
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
