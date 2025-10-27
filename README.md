@@ -36,7 +36,28 @@ sudo chmod +x *.sh && ./setup.sh
 
 # Launch the application
 ./start.sh
-Note: For large Python applications (over 200 lines), starting with a bash script that sets up a virtual environment and runs the module (python -m ...) is recommended, as it makes these big Python apps run super fast.💻 Usage and CommandsThe agent starts in the TUI, with all interaction taking place in the main input box.ModesThe agent supports two primary modes, which can be specified using a prefix or set as the session default.PrefixMode NameDescription/chatChat ModeSimple question/answer. No tools are used, and the conversation is focused on direct answers./agentAgent ModeGoal-driven. The agent will use available tools (write_file, run_code) and multiple steps to achieve the objective. (Default Mode)💡 Example Prompts/chat tell me a bad joke
+Note: For large Python applications (over 200 lines), starting with a bash script that sets up a virtual environment and runs the module (python -m ...) is recommended, as it makes these big Python apps run super fast.💻 Usage and CommandsThe agent starts in the TUI, with all interaction taking place in the main input box.ModesThe agent supports two primary modes, which can be specified using a prefix or set as the session default.PrefixMode NameDescription/chatChat ModeSimple question/answer. No tools are used, and the conversation is focused on direct answers./agentAgent ModeGoal-driven. The agent will use available tools (write_file, run_code) and multiple steps to achieve the objective. (Default Mode)💡 
+Example Prompts/chat tell me a bad joke
 
 /agent Create a Python file named 'agent_test.py' that defines a function called 'greeting' which returns the string "Agent mode works!". Then, use the 'run_code' tool to execute that file using 'python agent_test.py' and print the output
-TUI Bindings (Keyboard Shortcuts)Key BindingActionDescriptionF1 or Ctrl+Otoggle_optionsToggles the Configuration/Permissions side panel.Ctrl+QquitExits the application.Ctrl+Rreset_sessionClears the chat history and resets the session mode to default.Ctrl+Dshow_toolsDisplays a list of available tools and their permission status.Copy/Paste and LinksLinks: Hold the Ctrl button and click links to open them in your browser.Selection: Hold Shift to select and copy/paste text with the mouse or keyboard (Ctrl+C/Ctrl+V).⚙️ ConfigurationConfiguration files are stored in your home directory for persistent settings.FilePurposeManagement Commandconfig.jsonModel/Provider Configgedit ~/.own_cli_agent/config.jsonpermissions.jsonSecurity/Tool Accessgedit ~/.own_cli_agent/permissions.jsonhistory.jsonUser Command History(Managed automatically)error.logDebugging Logs(Managed automatically)Configuration TipsEdit the config: gedit ~/.own_cli_agent/config.jsonCheck Permissions: gedit ~/.own_cli_agent/permissions.jsonBackup a config: cp ~/.own_cli_agent/config.json .WorkspaceDirectoryPurpose./project_folderThe default working directory. All files created by the agent (write_file tool) are contained within this folder.
+TUI Bindings (Keyboard Shortcuts)Key BindingActionDescriptionF1 or Ctrl+Otoggle_optionsToggles the Configuration/Permissions side panel.Ctrl+QquitExits the application.Ctrl+Rreset_sessionClears the chat history and resets the session mode to default.Ctrl+Dshow_toolsDisplays a list of available tools and their permission status.
+Copy/Paste and LinksLinks: Hold the Ctrl button and click links to open them in your browser.Selection: Hold Shift to select and copy/paste text with the mouse or keyboard (Ctrl+C/Ctrl+V).⚙️ ConfigurationConfiguration files are stored in your home directory 
+for persistent settings.FilePurposeManagement Commandconfig.jsonModel/Provider Config
+
+gedit ~/.own_cli_agent/config.json
+permissions.json
+Security/Tool Access
+gedit ~/.own_cli_agent/permissions.jsonhistory.json
+User Command History(Managed automatically)error.log
+
+Debugging Logs(Managed automatically)Configuration TipsEdit the config: gedit ~/.own_cli_agent/config.jsonCheck 
+
+Permissions: gedit ~/.own_cli_agent/permissions.json
+
+Backup a config: 
+cp ~/.own_cli_agent/config.json .
+
+WorkspaceDirectoryPurpose./project_folder
+
+The default working directory. 
+All files created by the agent (write_file tool) are contained within this folder.
