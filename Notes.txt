@@ -8,6 +8,52 @@ Auto Setup
 
 sudo chmod +x *.sh && ./setup.sh
 
+./start.sh
+
+Start via a bash rc function
+
+function owncli(){
+cd ~/Documents/Scripts/AI/Own-Agent-CLI
+bash ./start.sh 
+}
+
+
+You can then try:
+
+Chat: /chat What is the best language for CLI tools?
+
+Agent: /agent Create a Python script named 'hello.py' that prints 'Hello, Agent CLI!' and then run it.
+
+Options: Press F1 to toggle the configuration and permissions view.
+
+
+Permissions File
+gedit ~/.own_cli_agent/permissions.json
+
+
+Edit the config
+gedit ~/.own_cli_agent/config.json
+
+
+To backup a config
+cp ~/.own_cli_agent/config.json .
+
+
+hold ctrl button and click links to open in browser!
+Hold shift to select and copy / paste text with mouse or kb along with ctrl button!
+
+
+# Example prompts
+
+/chat tell me a bad joke
+
+/agent Create a Python file named 'agent_test.py' that defines a function called 'greeting' which returns the string "Agent mode works!". Then, use the 'run_code' tool to execute that file using 'python agent_test.py' and print the output
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Make sure Ollama is running (ollama serve)
+
+
 
 Manual Setup
 
@@ -31,44 +77,6 @@ fi
 # Install required pip things!
 pip install textual requests
 
-./start.sh
-
-
-
-You can then try:
-
-Chat: /chat What is the best language for CLI tools?
-
-Agent: /agent Create a Python script named 'hello.py' that prints 'Hello, Agent CLI!' and then run it.
-
-Options: Press F1 to toggle the configuration and permissions view.
-
-
-
-Permissions File
-gedit ~/.own_cli_agent/permissions.json
-
-
-
-Edit the config
-gedit ~/.own_cli_agent/config.json
-
-To backup a config
-cp ~/.own_cli_agent/config.json .
-
-hold ctrl button and click links to open in browser!
-Hold shift to select and copy / paste text with mouse or kb along with ctrl button!
-
-
-# Example prompts
-
-/chat tell me a bad joke
-
-/agent Create a Python file named 'agent_test.py' that defines a function called 'greeting' which returns the string "Agent mode works!". Then, use the 'run_code' tool to execute that file using 'python agent_test.py' and print the output
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-# Make sure Ollama is running (ollama serve)
 
 # Old Method
 # Start App
