@@ -266,7 +266,7 @@ class OwnCLIApp(App):
         self.log_display.write(f"[CONFIG] Project Directory: {TEMP_PROJECT_DIR.relative_to(Path.cwd())}")
         self.log_display.write(f"[CONFIG] Default Chat Model: {self.config.get_default_model('chat')}")
         self.log_display.write(f"[CONFIG] Default Agent Model: {self.config.get_default_model('agent')}")
-        self.log_display.write(f"[STATUS] Ready. Use /agent or /chat before your message.")
+        self.log_display.write(f"[STATUS] Ready. Use /agent /chat /model before your message.")
                 
         # Load history into the input widget
         input_widget=self.query_one(Input)
