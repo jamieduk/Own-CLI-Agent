@@ -90,16 +90,19 @@ class OwnCLIApp(App):
         self.config=ConfigManager()
         self.permissions=PermissionsManager()
         self.app_title="Own-CLI Agent (Ollama/Multi-Provider)"
-        self.sub_title="Enter a goal or a message. Use /agent or /chat"
+        self.sub_title="Enter a goal or a message. Use /agent  /chat  /model"
         self.log_display=RichLog(id="log-display", highlight=True, markup=True)
-                
+        
         self.command_history=self._load_history()
-                
+        
         # Pass self (the App instance) to managers for error logging access
         self.model_manager=ModelManager(self.config, self.log_display, self)
         self.tool_executor=ToolExecutor(self.permissions, self.log_display, self)
         self.chat_history=[]
         self.session_mode='agent' # Default mode: agent
+        
+        # --- NEW: Temporary model override state ---
+        self.temp_model_override: str | None=None
 
     # --- Utility Methods ---
 
@@ -134,12 +137,12 @@ class OwnCLIApp(App):
         if exception:
             log_entry.append(f"EXCEPTION TYPE: {type(exception).__name__}")
             log_entry.append(f"EXCEPTION DETAIL: {str(exception)}")
-                    
+                        
             tb=traceback.format_exc()
             if "Traceback (most recent call last)" in tb and len(tb.strip()) > 50:
                 log_entry.append("FULL TRACEBACK:\n" + tb)
             else:
-                 log_entry.append("No detailed Python traceback available from current context.")
+                log_entry.append("No detailed Python traceback available from current context.")
 
         log_content="\n".join(log_entry) + "\n\n"
                 
@@ -165,12 +168,12 @@ class OwnCLIApp(App):
         # Function to safely unescape the most common sequences
         def unescape_safe(s: str) -> str:
             """
-            Replaces literal \\n, \\t, \\r, \\\\ with actual characters,
+            Replaces literal \n, \t, \r, \\ with actual characters,
             AND reverses common HTML entities used for quote/ampersand.
             """
             # 1. Reverse HTML entities (CRITICAL for Python code content)
-            s = s.replace("&quot;", "\"")  # Replaces &quot; with "
-            s = s.replace("&amp;", "&")    # Replaces &amp; with & (if model escapes it)
+            s=s.replace("&quot;", "\"")  # Replaces &quot; with "
+            s=s.replace("&amp;", "&")    # Replaces &amp; with & (if model escapes it)
 
             # 2. Reverse Agent's backslash escaping (as defined in the prompt)
             return s.replace("\\n", "\n").replace("\\t", "\t").replace("\\r", "\r").replace("\\\\", "\\")
@@ -180,10 +183,10 @@ class OwnCLIApp(App):
             func_match=re.search(r'function=["\'](write_file|run_code)["\']', match)
             if not func_match:
                 continue
-                    
+                        
             function_name=func_match.group(1)
             args={}
-                    
+                        
             if function_name == "write_file":
                 # Path and Content are required for write_file
                 # Path is usually simple and less likely to contain internal quotes
@@ -259,7 +262,7 @@ class OwnCLIApp(App):
         self.screen.styles.background="#1E1E1E"
         self.query_one(Header).styles.color="gold"
 
-        self.log_display.write(f"[WELCOME] Own-CLI Agent V1.0 - Local LLM Agentic CLI")
+        self.log_display.write(f"[WELCOME] Own-CLI Agent V2.0 - Local LLM Agentic CLI\nMade by jnetai.com forum jnet.forumotion.com")
         self.log_display.write(f"[CONFIG] Project Directory: {TEMP_PROJECT_DIR.relative_to(Path.cwd())}")
         self.log_display.write(f"[CONFIG] Default Chat Model: {self.config.get_default_model('chat')}")
         self.log_display.write(f"[CONFIG] Default Agent Model: {self.config.get_default_model('agent')}")
@@ -335,6 +338,75 @@ class OwnCLIApp(App):
         ]
         self.log_display.write("\n".join(tools_info))
 
+    # --- NEW MODEL HELPER ---
+    def _get_current_model(self, mode: str) -> str:
+        """Helper to get the model, checking the temporary override first."""
+        if self.temp_model_override:
+            return self.temp_model_override
+        elif mode == 'agent':
+            return self.config.get_default_model('agent')
+        else: # chat mode
+            return self.config.get_default_model('chat')
+
+    # --- NEW COMMAND PROCESSOR ---
+    def action_process_command(self, user_input: str) -> None:
+        """Processes user input, checking for special commands (/chat, /agent, /model)."""
+        
+        parts=user_input.strip().split(maxsplit=1)
+        command=parts[0].lower()
+        prompt=parts[1].strip() if len(parts) > 1 else ""
+
+        # 1. Handle /model command (NEW)
+        if command == "/model":
+            if not prompt:
+                current=self.temp_model_override if self.temp_model_override else "default (from config)"
+                self.log_display.write(f"Current temporary model: [bold]{current}[/bold]. Usage: /model <model-name> or /model reset")
+                return
+
+            model_name=prompt
+            if model_name in ("reset", "clear", "default"):
+                self.temp_model_override=None
+                self.log_display.write("Model override cleared. Reverting to default configuration.")
+            else:
+                self.temp_model_override=model_name
+                self.log_display.write(f"Temporary model switched to: [bold cyan]{model_name}[/bold cyan] for both chat and agent modes.")
+            
+            # Update placeholder immediately
+            self.query_one(Input).placeholder=f"Current Mode: /{self.session_mode} (Model: {self._get_current_model(self.session_mode)})"
+            return
+            
+        # 2. Handle /chat and /agent
+        if command == "/chat":
+            self.session_mode='chat'
+        elif command == "/agent":
+            self.session_mode='agent'
+        
+        # Determine the final prompt and mode
+        if command.startswith("/") and command not in ["/chat", "/agent"]:
+            # Treat unknown command as part of the prompt in the current mode
+            mode_to_use=self.session_mode
+            prompt_to_use=user_input
+        else:
+            mode_to_use=self.session_mode
+            prompt_to_use=prompt
+
+        if not prompt_to_use:
+            self.log_display.write(f"[STATUS] Please provide a prompt after the command: /{command}.")
+            return
+            
+        # 3. Determine the model to use
+        model_to_use=self._get_current_model(mode_to_use)
+            
+        # 4. Execute based on mode
+        if mode_to_use == 'chat':
+            self._handle_chat_query(model_to_use, prompt_to_use)
+        elif mode_to_use == 'agent':
+            self._handle_agent_query(model_to_use, prompt_to_use)
+            
+        # Update placeholder at the end
+        self.query_one(Input).placeholder=f"Current Mode: /{self.session_mode} (Model: {model_to_use})"
+        self.query_one(Input).focus()
+
     # --- Input Handling and Core Agent Logic ---
     
     def on_input_submitted(self, message: Input.Submitted) -> None:
@@ -352,32 +424,54 @@ class OwnCLIApp(App):
             self.command_history.append(user_input)
             self._save_history()
 
-        # Determine mode and prompt
-        if user_input.startswith("/chat"):
-            mode='chat'
-            prompt=user_input[5:].strip()
-        elif user_input.startswith("/agent"):
-            mode='agent'
-            prompt=user_input[6:].strip()
-        else:
-            mode=self.session_mode
-            prompt=user_input
+        # --- UPDATED: Use the new command processor for all command logic ---
+        self.action_process_command(user_input)
+        # --- End of update ---
 
-        if not prompt:
-            self.log_display.write("[STATUS] Please provide a prompt after the command.")
-            return
-
-        # Execute based on mode
-        model_name=self.config.get_default_model(mode)
+# --- Autocomplete Suggestions for Textual Input ---
+    def on_input_changed(self, event: Input.Changed) -> None:
+        """
+        Handles input changes to provide dynamic autocompletion suggestions 
+        for commands and model names.
+        """
+        user_input=event.value
+        suggestions=[]
+        input_widget=self.query_one(Input)
+        
+        if user_input.startswith("/"):
+            
+            if user_input.startswith("/model"):
+                # Split the input. Result will be ['/model', 'fragment'] or ['/model']
+                parts=user_input.split(maxsplit=1)
                 
-        if mode == 'chat':
-            self.session_mode='chat'
-            self._handle_chat_query(model_name, prompt)
-        elif mode == 'agent':
-            self.session_mode='agent'
-            self._handle_agent_query(model_name, prompt)
-                    
-        self.query_one(Input).placeholder=f"Current Mode: /{self.session_mode} (Model: {model_name})"
+                # CRITICAL FIX: Check if the 'fragment' part exists (i.e., if parts length > 1)
+                # If the input is just '/model' or '/model ' (as in the crash), parts[1] doesn't exist.
+                typed_fragment=parts[1] if len(parts) > 1 else ""
+                
+                # Assumes ModelManager.get_ollama_models() is implemented 
+                # to return a list of local models (e.g., from 'ollama ls')
+                models=self.model_manager.get_ollama_models() 
+                
+                # Include the 'reset' command
+                all_model_options=["reset"] + models
+                
+                suggestions=[
+                    option
+                    for option in all_model_options
+                    if option.startswith(typed_fragment)
+                ]
+                # Format suggestions to include the full command for the user
+                input_widget.suggestions=[f"/model {s}" for s in suggestions]
+
+            else:
+                # Basic command completion (/chat, /agent)
+                all_commands=["/chat", "/agent", "/model"]
+                suggestions=[cmd for cmd in all_commands if cmd.startswith(user_input.lower())]
+                input_widget.suggestions=suggestions
+                
+        else:
+            # Clear suggestions when not typing a command
+            input_widget.suggestions=[]
 
 
     def _handle_chat_query(self, model_name: str, prompt: str):
@@ -401,6 +495,10 @@ class OwnCLIApp(App):
         else:
             self.log_display.write(f"[ERROR] Chat failed: {response_text}")
 
+        # Ensure the input placeholder reflects the chat's current model
+        current_model=self._get_current_model(self.session_mode)
+        self.query_one(Input).placeholder=f"Current Mode: /{self.session_mode} (Model: {current_model})"
+
 
     def _handle_agent_query(self, model_name: str, prompt: str):
         """Processes a query in agentic (tool-using) mode."""
@@ -415,11 +513,11 @@ class OwnCLIApp(App):
             "   **NEVER** use separate opening and closing tags (e.g., `<tool_call>...</tool_call>`).\n"
             "2. **ESCAPING (CRITICAL):** Arguments MUST use double quotes. For `write_file` content, "
             "   use **literal backslash sequences**:\n"
-            "    - **Newline (`\\n`)** MUST be `\\\\n`.\n"
-            "    - **Tab (`\\t`)** MUST be `\\\\t`.\n"
+            "   - **Newline (`\\n`)** MUST be `\\\\n`.\n"
+            "   - **Tab (`\\t`)** MUST be `\\\\t`.\n"
             "3. **AVAILABLE TOOLS:**\n"
-            "    - [bold]write_file[/bold](path, content): Writes Python/script code. Content **must** be escaped and provided as a single attribute value.\n"
-            "    - [bold]run_code[/bold](command): Executes shell commands (e.g., `python file.py`).\n"
+            "   - [bold]write_file[/bold](path, content): Writes Python/script code. Content **must** be escaped and provided as a single attribute value.\n"
+            "   - [bold]run_code[/bold](command): Executes shell commands (e.g., `python file.py`).\n"
             
             # --- CRITICALLY UPDATED CODE OUTPUT MANDATE ---
             "4. **CODE OUTPUT MANDATE (CRITICAL):** All code that returns a value intended for the user MUST be wrapped in an explicit `print()` call to ensure the output is written to STDOUT (e.g., `print(function_name())`). If the code doesn't output to STDOUT, the agent fails.\n"
@@ -481,5 +579,6 @@ class OwnCLIApp(App):
                 break
                 
         # Ensure the input placeholder reflects the agent's current mode
-        self.query_one(Input).placeholder=f"Current Mode: /{self.session_mode} (Model: {model_name})"
+        current_model=self._get_current_model(self.session_mode)
+        self.query_one(Input).placeholder=f"Current Mode: /{self.session_mode} (Model: {current_model})"
         self.query_one(Input).focus()

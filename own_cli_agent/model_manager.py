@@ -16,6 +16,51 @@ class ModelManager:
         self.log_display=log_display  
         self.app=app_instance # Reference to the main App for logging
 
+        # Cache for Ollama models to avoid frequent API calls
+        self._ollama_model_cache=[]
+        self._last_ollama_fetch=0
+        self._cache_duration=300 # Cache for 5 minutes (300 seconds)
+
+    # --- NEW: Model Discovery for Autocompletion ---
+    def get_ollama_models(self) -> list[str]:
+        """
+        Retrieves a list of available models from the configured Ollama instance.
+        Uses caching to reduce API load.
+        """
+        ollama_provider=self.config.get_provider_by_type('ollama')
+
+        if not ollama_provider:
+            self.log_display.write("[MODEL:WARN] No Ollama provider found in config. Cannot fetch models.")
+            return []
+
+        # Check cache freshness
+        if time.time() - self._last_ollama_fetch < self._cache_duration and self._ollama_model_cache:
+            return self._ollama_model_cache
+
+        base_url=ollama_provider['base_url']
+        # Use the list endpoint
+        url=f"{base_url}/api/tags"
+
+        try:
+            response=requests.get(url, timeout=10) # Short timeout for listing models
+            response.raise_for_status()
+            
+            result=response.json()
+            if 'models' in result:
+                model_names=[m['name'] for m in result['models']]
+                self._ollama_model_cache=model_names
+                self._last_ollama_fetch=time.time()
+                return model_names
+            
+            return []
+        
+        except RequestException as e:
+            # Log the error to the console, but don't log to file unless critical
+            self.log_display.write(f"[MODEL:ERROR] Failed to connect to Ollama for model list: {e}")
+            return []
+    
+    # --- API Call Logic ---
+
     def call_ollama(self, model, messages, provider):
         """Handles the Ollama API call specifically."""
                 
@@ -31,7 +76,9 @@ class ModelManager:
         url=f"{base_url}/api/chat"
                 
         # CRITICAL: Agent model gets higher temperature
-        temperature=0.7 if model == self.config.get_default_model('agent') else 0.3
+        # Use a more explicit check for agent mode instead of model name comparison
+        is_agent_mode=messages[0]['role'] == 'system' and 'tool' in messages[0]['content'].lower()
+        temperature=0.7 if is_agent_mode else 0.3
 
         data={
             "model": model,
@@ -49,7 +96,7 @@ class ModelManager:
             # The timeout is very long (5920 seconds)
             response=requests.post(url, headers=headers, json=data, timeout=5920)
             response.raise_for_status()
-                    
+                        
             # Ollama /api/chat response structure
             result=response.json()
             if result.get('message') and result['message'].get('content'):
@@ -69,7 +116,9 @@ class ModelManager:
 
             # Extract a snippet of the error detail for the console log
             error_text=error_details.replace('\n', ' ').strip()
-            detail_snippet=error_text[error_text.find('{'):]
+            # Use regex to safely extract JSON snippet for display
+            detail_snippet_match=re.search(r'\{.*\}', error_text)
+            detail_snippet=detail_snippet_match.group(0) if detail_snippet_match else error_text
 
             self.log_display.write(f"[MODEL:ERROR] Ollama request failed with HTTP Status {status_code}. Details: {detail_snippet[:100]}...")
             return f"ERROR: Ollama returned HTTP Status {status_code}. Check if the model '{model}' is pulled and running."
@@ -106,6 +155,7 @@ class ModelManager:
         if provider['type'] == 'ollama':
             return self.call_ollama(model_name, messages, provider)
         elif provider['type'] == 'external':
+            # Note: External logic still needs full implementation for production use
             return self.call_external(model_name, messages, provider)
                     
         return f"ERROR: Unknown provider type '{provider['type']}'"

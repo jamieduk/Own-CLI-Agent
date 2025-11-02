@@ -22,7 +22,7 @@ DEFAULT_CONFIG={
             "name": "Ollama Local",
             "enabled": True,
             "type": "ollama",
-            "base_url": "http://localhost:11434",
+            "base_url": "http://localhost:4000", # proxy like toolbridge!
             "chat_model": "deepseek-r1:7b",
             "agent_model": "llama3.1:8b:latest",
             "image_model": "llava-phi3:latest",
@@ -98,7 +98,17 @@ class ConfigManager:
         key=f"default_{mode}_model"
         return self.config.get(key, DEFAULT_CONFIG.get(key))
 
+    def get_provider_by_type(self, provider_type: str) -> dict | None:
+        """
+        Retrieves the first enabled provider matching the specified type (e.g., 'ollama').
+        Returns the provider dictionary or None if not found/enabled.
+        """
+        for provider in self.config.get('providers', []):
+            if provider.get('type') == provider_type and provider.get('enabled', False):
+                return provider
+        return None
 
+        
 class PermissionsManager:
     """Handles reading and writing the permissions file."""
     def __init__(self):
