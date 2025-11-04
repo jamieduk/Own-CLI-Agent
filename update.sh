@@ -24,7 +24,6 @@ fi
 pip install textual requests
 pip install pyperclip pynput elevenlabs pyttsx3 pygame
 
-
 echo "Looking For Ollama..."
 
 
@@ -49,9 +48,4 @@ echo "Read Notes.txt And README.md files to learn how to configure and customise
 
 
 bash ./start.sh
-
-
-
-
-
 
