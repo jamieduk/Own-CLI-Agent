@@ -76,6 +76,7 @@ fi
 
 # Install required pip things!
 pip install textual requests
+pip install pyperclip pynput elevenlabs pyttsx3 pygame
 
 
 # Old Method
