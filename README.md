@@ -55,6 +55,9 @@ Hold Shift to select and copy/paste text with the mouse or keyboard (Ctrl+C/Ctrl
 ⚙️ ConfigurationConfiguration files are stored in your home directory 
 for persistent settings.FilePurposeManagement Commandconfig.jsonModel/Provider Config
 
+Note you will need a free elevenlabs api key to use the updated version!
+https://elevenlabs.io/developers
+
 gedit ~/.own_cli_agent/config.json
 permissions.json
 
@@ -77,4 +80,5 @@ WorkspaceDirectoryPurpose./project_folder
 
 The default working directory. 
 All files created by the agent (write_file tool) are contained within this folder.
+
 
