@@ -94,7 +94,7 @@ class ModelManager:
                 
         try:
             # The timeout is very long (5920 seconds)
-            response=requests.post(url, headers=headers, json=data, timeout=5920)
+            response=requests.post(url, headers=headers, json=data, timeout=1000)
             response.raise_for_status()
                         
             # Ollama /api/chat response structure
