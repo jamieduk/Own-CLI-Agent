@@ -10,6 +10,12 @@ class ToolExecutor:
         self.permissions=permissions_manager
         self.log_display=log_display
         self.app=app_instance
+        self.project_dir=Path.cwd() / "project_folder"
+
+    def set_project_dir(self, project_path: Path) -> None:
+        """Set the project directory for file operations."""
+        self.project_dir=project_path
+        self.project_dir.mkdir(parents=True, exist_ok=True)
 
     # ---------------------------------------------------------
     # INTERNAL: Clean model garbage (markdown / quotes / etc)
@@ -72,17 +78,14 @@ class ToolExecutor:
         if '..' in path or path.startswith('/'):
             return "TOOL:ERROR: Invalid path. Path must be relative and inside the project folder."
 
-        # Clean model formatting
         cleaned=self._clean_content(content)
 
-        # Reject pure descriptive text (very basic guard)
         if len(cleaned)<20 or not any(x in cleaned for x in ["<","{",";","def ","function "]):
             return "TOOL:ERROR: Model returned non-code content. Refusing to write file."
 
-        # Detect correct extension
         corrected_name=self._detect_extension(path,cleaned)
 
-        full_path=TEMP_PROJECT_DIR / corrected_name
+        full_path=self.project_dir / corrected_name
         full_path.parent.mkdir(parents=True,exist_ok=True)
 
         try:
@@ -105,12 +108,12 @@ class ToolExecutor:
         if not self.permissions.is_allowed('allow_code_execution'):
             return "TOOL:ERROR: Code execution is blocked by permissions. Change permissions.json to enable."
 
-        self.log_display.write(f"[TOOL:EXEC] Running command: '{command}' in {TEMP_PROJECT_DIR}")
+        self.log_display.write(f"[TOOL:EXEC] Running command: '{command}' in {self.project_dir}")
 
         try:
             result=subprocess.run(
                 command,
-                cwd=TEMP_PROJECT_DIR,
+                cwd=self.project_dir,
                 shell=True,
                 capture_output=True,
                 text=True,

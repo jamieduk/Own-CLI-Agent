@@ -22,15 +22,16 @@ DEFAULT_CONFIG={
             "name": "Ollama Local",
             "enabled": True,
             "type": "ollama",
-            "base_url": "http://localhost:4000", # proxy like toolbridge!
-            "chat_model": "deepseek-r1:7b",
-            "agent_model": "llama3.1:8b:latest",
+            "base_url": "http://localhost:11434", # proxy like toolbridge!
+            "chat_model": "minimax-m2.5:cloud",  # Fastest!
+            "agent_model": "llama3.1:8b",
             "image_model": "llava-phi3:latest",
             "api_key": "NA"
         },
     ],
-    "default_chat_model": "deepseek-r1:7b",
-    "default_agent_model": "llama3.1:8b:latest",
+    "default_chat_model": "minimax-m2.5:cloud",  # Fastest for chat!
+    "default_agent_model": "llama3.1:8b",
+    "tts_enabled": False,  # Default OFF - set to true to enable voice output
 }
 
 DEFAULT_PERMISSIONS={
@@ -75,6 +76,18 @@ class ConfigManager:
         else:
             self._save_config()
 
+
+    def get_provider_by_type(self, provider_type: str) -> dict | None:
+        """
+        Retrieves the first enabled provider matching the specified type (e.g., 'ollama').
+        Returns the provider dictionary or None if not found/enabled.
+        """
+        for provider in self.config.get('providers', []):
+            if provider.get('type') == provider_type and provider.get('enabled', False):
+                return provider
+        return None
+        
+        
     def _save_config(self):
         """Save the current configuration to file."""
         try:
@@ -98,17 +111,7 @@ class ConfigManager:
         key=f"default_{mode}_model"
         return self.config.get(key, DEFAULT_CONFIG.get(key))
 
-    def get_provider_by_type(self, provider_type: str) -> dict | None:
-        """
-        Retrieves the first enabled provider matching the specified type (e.g., 'ollama').
-        Returns the provider dictionary or None if not found/enabled.
-        """
-        for provider in self.config.get('providers', []):
-            if provider.get('type') == provider_type and provider.get('enabled', False):
-                return provider
-        return None
 
-        
 class PermissionsManager:
     """Handles reading and writing the permissions file."""
     def __init__(self):

@@ -61,7 +61,7 @@ class ModelManager:
     
     # --- API Call Logic ---
 
-    def call_ollama(self, model, messages, provider):
+    def call_ollama(self, model, messages, provider, mode='chat'):
         """Handles the Ollama API call specifically."""
                 
         # --- STATUS UPDATE: This is the line that confirms the request is running ---
@@ -93,8 +93,9 @@ class ModelManager:
         }
                 
         try:
-            # The timeout is very long (5920 seconds)
-            response=requests.post(url, headers=headers, json=data, timeout=1000)
+            # Faster timeout for chat (30 seconds), longer for agent (120 seconds)
+            timeout=30 if mode == 'chat' else 120
+            response=requests.post(url, headers=headers, json=data, timeout=timeout)
             response.raise_for_status()
                         
             # Ollama /api/chat response structure
@@ -153,7 +154,7 @@ class ModelManager:
         self.log_display.write(f"[MODEL:INFO] Calling {provider['name']} with model {model_name}...")
 
         if provider['type'] == 'ollama':
-            return self.call_ollama(model_name, messages, provider)
+            return self.call_ollama(model_name, messages, provider, mode)
         elif provider['type'] == 'external':
             # Note: External logic still needs full implementation for production use
             return self.call_external(model_name, messages, provider)
