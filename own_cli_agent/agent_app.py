@@ -601,6 +601,7 @@ class OwnCLIApp(App):
     def action_reset_session(self) -> None:
         """Resets the chat history and logs."""
         self.chat_history=[]
+        self.model_manager.reset_session()
         self.log_display.clear()
         self.log_display.write("[STATUS] Session and chat history reset.")
         self.query_one(Input).value=""
@@ -756,9 +757,9 @@ class OwnCLIApp(App):
                 # If the input is just '/model' or '/model ' (as in the crash), parts[1] doesn't exist.
                 typed_fragment=parts[1] if len(parts) > 1 else ""
                 
-                # Assumes ModelManager.get_ollama_models() is implemented 
-                # to return a list of local models (e.g., from 'ollama ls')
-                models=self.model_manager.get_ollama_models() 
+                # Assumes ModelManager.get_available_models() is implemented 
+                # to return model names from every enabled provider.
+                models=self.model_manager.get_available_models()
                 
                 # Include the 'reset' command
                 all_model_options=["reset"] + models

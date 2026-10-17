@@ -98,12 +98,19 @@ class ConfigManager:
 
     def get_provider(self, model_name):
         """Find the provider configuration for a given model name."""
+        enabled_providers=[]
         for provider in self.config.get("providers", []):
             if provider.get("enabled"):
+                enabled_providers.append(provider)
                 if (provider.get("chat_model") == model_name or 
                     provider.get("agent_model") == model_name or 
                     provider.get("image_model") == model_name):
                     return provider
+
+        # Allow /model overrides that name any model from a single provider.
+        if len(enabled_providers) == 1:
+            return enabled_providers[0]
+
         return None
 
     def get_default_model(self, mode):
