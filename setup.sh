@@ -21,9 +21,11 @@ else
 fi
 
 # Install required pip things!
+sudo apt update
 pip install textual requests
 pip install pyperclip pynput elevenlabs pyttsx3 pygame
 
+sudo apt install -y libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
 
 echo "Looking For Ollama..."
 
@@ -49,9 +51,5 @@ echo "Read Notes.txt And README.md files to learn how to configure and customise
 
 
 bash ./start.sh
-
-
-
-
 
 
