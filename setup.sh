@@ -39,10 +39,19 @@ else
     curl -fsSL https://ollama.com/install.sh | sh
 fi
 
-echo "Getting Ollama Models"
-ollama pull llama3.1:8b
-ollama pull deepseek-r1:7b
-ollama pull llava-phi3:latest
+read -p "Do you want to download the Ollama models (llama3.1:8b, deepseek-r1:7b, llava-phi3)? [y/N] " response
+
+# Convert response to lowercase using built-in parameter expansion
+response=${response,,}
+
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+    echo "Getting Ollama Models"
+    ollama pull llama3.1:8b
+    ollama pull deepseek-r1:7b
+    ollama pull llava-phi3:latest
+else
+    echo "Download cancelled."
+fi
 
 echo "Setup Complete"
 echo ""
