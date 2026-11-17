@@ -1,0 +1,17 @@
+{
+    "providers": [
+        {
+            "name": "Ollama Local",
+            "enabled": true,
+            "type": "ollama",
+            "base_url": "http://localhost:11434",
+            "chat_model": "mistral:instruct",
+            "agent_model": "deepseek-r1:latest",
+            "image_model": "llava-phi3:latest",
+            "api_key": "NA"
+        }
+    ],
+    "default_chat_model": "mistral:instruct",
+    "default_agent_model": "deepseek-r1:latest",
+    "tts_enabled": false
+}
