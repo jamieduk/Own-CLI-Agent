@@ -1,0 +1,17 @@
+{
+    "providers": [
+        {
+            "name": "OpenCode Go",
+            "enabled": true,
+            "type": "openai",
+            "base_url": "https://opencode.ai/inference/go/openai/v1",
+            "chat_model": "deepseek-v4.1-flash",
+            "agent_model": "deepseek-v4.1-flash",
+            "image_model": "deepseek-v4.1-flash",
+            "api_key": "YOUR_OPENCODE_API_KEY"
+        }
+    ],
+    "default_chat_model": "deepseek-v4.1-flash",
+    "default_agent_model": "deepseek-v4.1-flash",
+    "tts_enabled": false
+}
